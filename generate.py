@@ -538,7 +538,7 @@ function setType(t) {
   } else {
     show.MA=true;
     document.getElementById('iMA').classList.add('on');
-    redraw();
+    switchTF('d');
   }
 }
 
