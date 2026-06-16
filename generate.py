@@ -145,6 +145,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
   <button class="btn" id="tf_y"   onclick="switchTF('y')">年</button>
   <div class="sep"></div>
   <button class="btn on" id="btnK" onclick="setType('candle')">K线</button>
+  <button class="btn"    id="btnL" onclick="setType('line')">分时图</button>
   <div class="sep"></div>
   <button class="btn on" id="iMA"   onclick="toggleInd('MA')">均线</button>
   <button class="btn on" id="iMACD" onclick="toggleInd('MACD')">MACD</button>
@@ -529,7 +530,16 @@ function switchTF(tf) {
 function setType(t) {
   chartType=t;
   document.getElementById('btnK').classList.toggle('on',t==='candle');
-  redraw();
+  document.getElementById('btnL').classList.toggle('on',t==='line');
+  if(t==='line') {
+    show.MA=false;
+    document.getElementById('iMA').classList.remove('on');
+    switchTF('m1');
+  } else {
+    show.MA=true;
+    document.getElementById('iMA').classList.add('on');
+    redraw();
+  }
 }
 
 function toggleInd(ind) {
