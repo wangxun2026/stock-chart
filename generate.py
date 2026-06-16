@@ -107,16 +107,17 @@ TEMPLATE = """<!DOCTYPE html>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#0d1117;color:#e6edf3;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.hdr{padding:8px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+.hdr{padding:4px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
 .hdr h1{font-size:15px;font-weight:600}
 .badge{background:#1f6feb;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px}
 .upd{font-size:11px;color:#8b949e;margin-left:auto}
 .leg{display:flex;gap:10px;font-size:11px;color:#8b949e;align-items:center}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px}
-.row{display:flex;align-items:center;gap:5px;padding:5px 14px;border-bottom:1px solid #21262d;flex-wrap:wrap;flex-shrink:0}
+.row{display:flex;align-items:center;gap:5px;padding:3px 14px;border-bottom:1px solid #21262d;flex-wrap:wrap;flex-shrink:0}
 .btn{padding:3px 11px;border:1px solid #30363d;background:#161b22;color:#8b949e;border-radius:5px;cursor:pointer;font-size:12px;transition:all .12s;white-space:nowrap}
 .btn:hover,.btn.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
 .sep{width:1px;height:16px;background:#30363d;margin:0 2px;flex-shrink:0}
+#row1.intraday [id^="tf_"],#row1.intraday .sep{display:none}
 #chart-wrap{position:relative;flex:1;min-height:0}
 #chart{width:100%;height:100%}
 .pol{position:absolute;left:10px;font-size:11px;pointer-events:none;line-height:1.4;padding-top:2px;white-space:nowrap}
@@ -134,7 +135,6 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 
 <!-- Row 1: timeframe | chart type | indicators -->
 <div class="row" id="row1">
-  <button class="btn" id="tf_m1"  onclick="switchTF('m1')">1分</button>
   <button class="btn" id="tf_m5"  onclick="switchTF('m5')">5分</button>
   <button class="btn" id="tf_m15" onclick="switchTF('m15')">15分</button>
   <button class="btn" id="tf_m30" onclick="switchTF('m30')">30分</button>
@@ -307,7 +307,7 @@ function buildOption() {
 
   // Grid layout
   const grids=[],xAxes=[],yAxes=[],series=[];
-  let top=6, gi=0;
+  let top=2, gi=0;
   const subH=12;
   const panels=[show.VOL,show.MACD,show.KDJ,show.OBV].filter(Boolean).length;
   const mainH=Math.max(87-top-panels*(subH+1.5),25);
@@ -417,7 +417,7 @@ function buildOption() {
     grid:grids, xAxis:xAxes, yAxis:yAxes,
     dataZoom:[
       {type:'inside',xAxisIndex:allGi},
-      {type:'slider',xAxisIndex:allGi,bottom:2,height:20,
+      {type:'slider',xAxisIndex:allGi,bottom:58,height:28,
         borderColor:'#30363d',backgroundColor:'#161b22',
         fillerColor:'rgba(31,111,235,0.15)',
         handleStyle:{color:'#1f6feb'},textStyle:{color:'#8b949e',fontSize:10}}
@@ -498,6 +498,9 @@ function redraw() {
 
 // ── Controls ──────────────────────────────────────────────────────
 function renderRangeButtons() {
+  const rangeRow = document.getElementById('rangeRow');
+  if(chartType==='line') { rangeRow.style.display='none'; return; }
+  rangeRow.style.display='';
   const ranges = TF_RANGES[activeTF] || TF_RANGES.d;
   const data = getDataForTF(activeTF);
   const isIntra = ['m1','m5','m15','m30','h1'].includes(activeTF);
@@ -522,7 +525,7 @@ function setRange(n) {
 function switchTF(tf) {
   activeTF=tf; activeRange=TF_DEFAULT_RANGE[tf]??0;
   document.querySelectorAll('#row1 .btn[id^="tf_"]').forEach(b=>b.classList.remove('on'));
-  document.getElementById('tf_'+tf).classList.add('on');
+  document.getElementById('tf_'+tf)?.classList.add('on');
   renderRangeButtons();
   redraw();
 }
@@ -534,10 +537,12 @@ function setType(t) {
   if(t==='line') {
     show.MA=false;
     document.getElementById('iMA').classList.remove('on');
+    document.getElementById('row1').classList.add('intraday');
     switchTF('m1');
   } else {
     show.MA=true;
     document.getElementById('iMA').classList.add('on');
+    document.getElementById('row1').classList.remove('intraday');
     switchTF('d');
   }
 }
