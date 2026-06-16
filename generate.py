@@ -310,7 +310,7 @@ function buildOption() {
   let top=2, gi=0;
   const subH=12;
   const panels=[show.VOL,show.MACD,show.KDJ,show.OBV].filter(Boolean).length;
-  const mainH=Math.max(87-top-panels*(subH+1.5),25);
+  const mainH=Math.max(80-top-panels*(subH+1.5),25);
 
   panelTops = {};
   const addGrid=(h,label,role)=>{
