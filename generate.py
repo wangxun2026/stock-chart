@@ -529,7 +529,6 @@ function switchTF(tf) {
 function setType(t) {
   chartType=t;
   document.getElementById('btnK').classList.toggle('on',t==='candle');
-  document.getElementById('btnL').classList.toggle('on',t==='line');
   redraw();
 }
 
