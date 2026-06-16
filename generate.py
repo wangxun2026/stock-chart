@@ -119,7 +119,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 .sep{width:1px;height:16px;background:#30363d;margin:0 2px;flex-shrink:0}
 #chart-wrap{position:relative;flex:1;min-height:0}
 #chart{width:100%;height:100%}
-.pol{position:absolute;left:76px;font-size:11px;pointer-events:none;line-height:1.4;padding-top:2px;white-space:nowrap}
+.pol{position:absolute;left:56px;font-size:11px;pointer-events:none;line-height:1.4;padding-top:2px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -315,7 +315,7 @@ function buildOption() {
   panelTops = {};
   const addGrid=(h,label,role)=>{
     if(role) panelTops[role]=top;
-    grids.push({left:72,right:12,top:`${top}%`,height:`${h}%`});
+    grids.push({left:52,right:8,top:`${top}%`,height:`${h}%`});
     xAxes.push({type:'category',data:dates,gridIndex:gi,
       axisLabel:{color:'#8b949e',fontSize:10,hideOverlap:true,show:false},
       axisLine:{lineStyle:{color:'#30363d'}},
