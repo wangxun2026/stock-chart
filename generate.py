@@ -145,7 +145,6 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
   <button class="btn" id="tf_y"   onclick="switchTF('y')">年</button>
   <div class="sep"></div>
   <button class="btn on" id="btnK" onclick="setType('candle')">K线</button>
-  <button class="btn"    id="btnL" onclick="setType('line')">折线</button>
   <div class="sep"></div>
   <button class="btn on" id="iMA"   onclick="toggleInd('MA')">均线</button>
   <button class="btn on" id="iMACD" onclick="toggleInd('MACD')">MACD</button>
