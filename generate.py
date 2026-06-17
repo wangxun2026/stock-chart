@@ -416,7 +416,7 @@ function buildOption() {
     axisPointer:{link:[{xAxisIndex:'all'}]},
     grid:grids, xAxis:xAxes, yAxis:yAxes,
     dataZoom:[
-      {type:'inside',xAxisIndex:allGi,moveOnTouchMove:false},
+      {type:'inside',xAxisIndex:allGi,moveOnMouseMove:false,preventDefaultMouseMove:false},
       {type:'slider',xAxisIndex:allGi,bottom:58,height:28,
         borderColor:'#30363d',backgroundColor:'#161b22',
         fillerColor:'rgba(31,111,235,0.15)',
