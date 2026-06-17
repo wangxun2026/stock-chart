@@ -418,6 +418,7 @@ function buildOption() {
     dataZoom:[
       {type:'inside',xAxisIndex:allGi,moveOnMouseMove:false,preventDefaultMouseMove:false,throttle:100},
       {type:'slider',xAxisIndex:allGi,bottom:58,height:28,
+        brushSelect:false,handleSize:28,moveHandleSize:0,
         borderColor:'#30363d',backgroundColor:'#161b22',
         fillerColor:'rgba(31,111,235,0.15)',
         handleStyle:{color:'#1f6feb'},textStyle:{color:'#8b949e',fontSize:10}}
