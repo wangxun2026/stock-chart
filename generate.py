@@ -349,10 +349,19 @@ function buildOption() {
     series.push({type:'candlestick',data:candles,xAxisIndex:mGi,yAxisIndex:mGi,
       itemStyle:{color:'#f85149',color0:'#3fb950',borderColor:'#f85149',borderColor0:'#3fb950'}});
   } else {
+    // 找出每天的第一根 bar，做分隔线
+    const dayBoundaries=[];
+    for(let i=1;i<d.length;i++) {
+      if(d[i].date.slice(0,10)!==d[i-1].date.slice(0,10)) dayBoundaries.push(i);
+    }
     series.push({type:'line',data:closes,xAxisIndex:mGi,yAxisIndex:mGi,showSymbol:false,
       lineStyle:{width:1.5,color:'#58a6ff'},
       areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,
-        colorStops:[{offset:0,color:'rgba(88,166,255,0.15)'},{offset:1,color:'rgba(88,166,255,0)'}]}}});
+        colorStops:[{offset:0,color:'rgba(88,166,255,0.15)'},{offset:1,color:'rgba(88,166,255,0)'}]}},
+      markLine:{symbol:'none',silent:true,
+        lineStyle:{color:'#8b949e',type:'dashed',width:1,opacity:0.5},
+        label:{show:false},
+        data:dayBoundaries.map(idx=>({xAxis:idx}))}});
   }
 
   // MA lines
