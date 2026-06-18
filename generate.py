@@ -566,11 +566,107 @@ function toggleInd(ind) {
 renderRangeButtons();
 redraw();
 
-// 自动刷新：页面切回前台且距上次加载 > 30 分钟时刷新
-const loadedAt = Date.now();
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && Date.now() - loadedAt > 30*60*1000) {
-    location.reload();
+// ── 客户端刷新：直接从 Yahoo Finance 通过 CORS 代理抓最新数据 ─────
+const PROXIES = [
+  u => 'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u => 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
+  u => 'https://thingproxy.freeboard.io/fetch/'+u,
+];
+const updLabel = document.getElementById('updLabel');
+
+function round4(v){return Math.round(v*10000)/10000;}
+const etFmt = new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',
+  year:'numeric',month:'2-digit',day:'2-digit',
+  hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function tsToET(ts){
+  const parts=Object.fromEntries(etFmt.formatToParts(new Date(ts*1000)).map(p=>[p.type,p.value]));
+  let h=parts.hour; if(h==='24') h='00';
+  return `${parts.year}-${parts.month}-${parts.day} ${h}:${parts.minute}`;
+}
+function tsToDay(ts){
+  const parts=Object.fromEntries(etFmt.formatToParts(new Date(ts*1000)).map(p=>[p.type,p.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+let activeProxy=0;
+async function yfetch(ticker,interval,range){
+  const url=`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${interval}&range=${range}`;
+  let lastErr;
+  for(let i=0;i<PROXIES.length;i++){
+    const p=(activeProxy+i)%PROXIES.length;
+    try{
+      const resp=await fetch(PROXIES[p](url));
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const raw=await resp.json();
+      activeProxy=p;
+      return parseYahoo(raw,interval);
+    }catch(e){ lastErr=e; }
+  }
+  throw lastErr;
+}
+
+function parseYahoo(raw,interval){
+  const res=raw?.chart?.result?.[0]; if(!res) return [];
+  const ts=res.timestamp||[], q=res.indicators.quote[0];
+  const vols=q.volume||[];
+  const isDaily=['1d','1wk','1mo'].includes(interval);
+  const rows=[];
+  for(let i=0;i<ts.length;i++){
+    const o=q.open[i],h=q.high[i],l=q.low[i],c=q.close[i];
+    if(o==null||h==null||l==null||c==null) continue;
+    rows.push({date:isDaily?tsToDay(ts[i]):tsToET(ts[i]),
+      open:round4(o),high:round4(h),low:round4(l),close:round4(c),
+      volume:vols[i]||0});
+  }
+  return rows;
+}
+
+function mergeIntra(u,f){
+  const fDays=new Set(f.map(r=>r.date.slice(0,10)));
+  return [...u.filter(r=>!fDays.has(r.date.slice(0,10))),...f]
+    .sort((a,b)=>a.date<b.date?-1:1);
+}
+
+async function refreshData(){
+  updLabel.textContent='更新中…';
+  try{
+    const [uD,fD,uH1,fH1,uM30,fM30,uM15,fM15,uM5,fM5,uM1,fM1]=await Promise.all([
+      yfetch('UGRO','1d','10y'),  yfetch('FLZH','1d','2y'),
+      yfetch('UGRO','60m','730d'),yfetch('FLZH','60m','730d'),
+      yfetch('UGRO','30m','60d'), yfetch('FLZH','30m','60d'),
+      yfetch('UGRO','15m','60d'), yfetch('FLZH','15m','60d'),
+      yfetch('UGRO','5m','60d'),  yfetch('FLZH','5m','60d'),
+      yfetch('UGRO','1m','7d'),   yfetch('FLZH','1m','7d'),
+    ]);
+    if(!fD.length || !uD.length) throw new Error('empty data');
+    const cutover=fD[0].date;
+    DATA.d=[...uD.filter(r=>r.date<cutover),...fD];
+    DATA.h1=mergeIntra(uH1,fH1);
+    DATA.m30=mergeIntra(uM30,fM30);
+    DATA.m15=mergeIntra(uM15,fM15);
+    DATA.m5=mergeIntra(uM5,fM5);
+    DATA.m1=mergeIntra(uM1,fM1);
+    // 清掉缓存（含 w/mo/y 聚合）
+    for(const k of Object.keys(tfData)) delete tfData[k];
+    tfData.d=DATA.d; tfData.h1=DATA.h1; tfData.m30=DATA.m30;
+    tfData.m15=DATA.m15; tfData.m5=DATA.m5; tfData.m1=DATA.m1;
+    const now=new Date().toLocaleString('zh-CN',{hour12:false});
+    updLabel.textContent='已更新 '+now;
+    redraw();
+  }catch(e){
+    console.warn('refresh failed, using embedded data',e);
+    updLabel.textContent='更新于 '+DATA.updated+' (实时刷新失败)';
+  }
+}
+
+refreshData();
+
+// 切回前台且距上次刷新 > 5 分钟时再刷新一次
+let lastRefresh=Date.now();
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && Date.now()-lastRefresh>5*60*1000){
+    lastRefresh=Date.now();
+    refreshData();
   }
 });
 </script>
