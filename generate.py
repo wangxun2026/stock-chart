@@ -556,6 +556,14 @@ function toggleInd(ind) {
 // ── Init ──────────────────────────────────────────────────────────
 renderRangeButtons();
 redraw();
+
+// 自动刷新：页面切回前台且距上次加载 > 30 分钟时刷新
+const loadedAt = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && Date.now() - loadedAt > 30*60*1000) {
+    location.reload();
+  }
+});
 </script>
 </body>
 </html>"""
