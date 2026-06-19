@@ -568,9 +568,7 @@ redraw();
 
 // ── 客户端刷新：直接从 Yahoo Finance 通过 CORS 代理抓最新数据 ─────
 const PROXIES = [
-  u => 'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u => 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
-  u => 'https://thingproxy.freeboard.io/fetch/'+u,
+  u => 'https://orange-cake-9a52.wangxun1027.workers.dev/?u='+encodeURIComponent(u),
 ];
 const updLabel = document.getElementById('updLabel');
 
