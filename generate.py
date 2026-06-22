@@ -177,7 +177,7 @@ const TF_RANGES = {
   mo:  [{l:'6月',n:6},   {l:'1年',n:12},{l:'2年',n:24}, {l:'5年',n:60},  {l:'全部',n:0}],
   y:   [{l:'全部',n:0}],
 };
-const TF_DEFAULT_RANGE = {m1:390, m5:390, m15:130, m30:65, h1:150, d:252, w:52, mo:24, y:0};
+const TF_DEFAULT_RANGE = {m1:390, m5:390, m15:130, m30:65, h1:150, d:63, w:52, mo:24, y:0};
 
 // ── State ─────────────────────────────────────────────────────────
 let activeTF = 'd', activeRange = TF_DEFAULT_RANGE.d;
@@ -402,8 +402,12 @@ function buildOption() {
     tooltip:{
       trigger:'axis',
       axisPointer:{type:'cross',link:{xAxisIndex:'all'}},
-      backgroundColor:'#161b22',borderColor:'#30363d',
+      backgroundColor:'rgba(22,27,34,0.92)',borderColor:'#30363d',
       textStyle:{color:'#e6edf3',fontSize:11},
+      confine:true,enterable:false,transitionDuration:0,
+      position:function(pt,params,dom,rect,size){
+        return {top:4,left:(size.viewSize[0]-size.contentSize[0])/2};
+      },
       formatter(params) {
         if(!params.length) return '';
         const i=params[0].dataIndex;
