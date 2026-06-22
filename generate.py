@@ -402,15 +402,7 @@ function buildOption() {
     tooltip:{
       trigger:'axis',
       axisPointer:{type:'cross',link:{xAxisIndex:'all'}},
-      backgroundColor:'rgba(22,27,34,0.92)',borderColor:'#30363d',
-      textStyle:{color:'#e6edf3',fontSize:11},
-      confine:true,enterable:false,transitionDuration:0,
-      position:function(pt,params,dom,rect,size){
-        const subTop=panelTops.vol??panelTops.macd??panelTops.kdj??panelTops.obv??70;
-        const topPx=size.viewSize[1]*subTop/100 - size.contentSize[1] - 6;
-        const leftPx=(size.viewSize[0]-size.contentSize[0])/2;
-        return [Math.max(4,leftPx), Math.max(4,topPx)];
-      },
+      showContent:false,
       formatter(params) {
         if(!params.length) return '';
         const i=params[0].dataIndex;
@@ -460,12 +452,30 @@ function updateOverlayContent(i) {
   const mel=document.getElementById('pol-main');
   if(mel) {
     const MA_DEF=[['MA5','#f0e040'],['MA10','#ff9900'],['MA30','#e040fb'],['MA60','#00bcd4'],['MA120','#ff6b6b']];
-    mel.innerHTML = show.MA
+    const maLine = show.MA
       ? MA_DEF.map(([nm,clr])=>{
           const v=curInd[nm]?.[si];
           return `<span style="color:${clr};margin-right:10px">${nm}:${v!=null?v:'—'}</span>`;
         }).join('')
       : '';
+    const dd=row.date;
+    const tk=isUGRO(dd)?'UGRO':'FLZH', tc=isUGRO(dd)?'#58a6ff':'#3fb950';
+    const prevClose=i>0?curD[i-1].close:row.open;
+    const chg=((row.close-prevClose)/prevClose*100);
+    const chgStr=(chg>=0?'+':'')+chg.toFixed(2)+'%';
+    const cc=row.close>=prevClose?'#f85149':'#3fb950';
+    let ohlc=`<span style="color:${tc};margin-right:8px">${tk}</span>`
+            +`<span style="color:#8b949e;margin-right:8px">${dd}</span>`;
+    if(chartType==='candle')
+      ohlc+=`<span style="margin-right:8px">开:${row.open}</span>`
+           +`<span style="margin-right:8px">高:${row.high}</span>`
+           +`<span style="margin-right:8px">低:${row.low}</span>`
+           +`<span style="margin-right:8px">收:${row.close}</span>`;
+    else
+      ohlc+=`<span style="margin-right:8px">收:${row.close}</span>`;
+    ohlc+=`<span style="color:#8b949e">昨收:${prevClose}</span>`
+         +`<span style="color:${cc};margin-left:8px">${chgStr}</span>`;
+    mel.innerHTML = (maLine ? maLine+'<br>' : '') + ohlc;
   }
 
   const vel=document.getElementById('pol-vol');
