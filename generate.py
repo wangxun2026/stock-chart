@@ -406,7 +406,11 @@ function buildOption() {
       textStyle:{color:'#e6edf3',fontSize:11},
       confine:true,enterable:false,transitionDuration:0,
       position:function(pt,params,dom,rect,size){
-        return {top:4,left:(size.viewSize[0]-size.contentSize[0])/2};
+        const subTop=panelTops.vol??panelTops.macd??panelTops.kdj??panelTops.obv;
+        const top=subTop!=null
+          ? Math.max(4, size.viewSize[1]*subTop/100 - size.contentSize[1] - 4)
+          : 4;
+        return {top, left:(size.viewSize[0]-size.contentSize[0])/2};
       },
       formatter(params) {
         if(!params.length) return '';
