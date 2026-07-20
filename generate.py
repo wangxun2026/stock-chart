@@ -55,22 +55,34 @@ def fetch(ticker, interval="1d", range_="10y"):
         })
     return rows
 
+# ── Load UGRO history (Yahoo purged it after delisting) ───────────
+import os
+UGRO_HIST_FILE = os.path.join(os.path.dirname(__file__), "ugro_history.json")
+with open(UGRO_HIST_FILE) as f:
+    ugro_hist = json.load(f)
+print(f"→ UGRO history from disk: {len(ugro_hist)} rows, {ugro_hist[0]['date']} → {ugro_hist[-1]['date']}")
+
 # ── Fetch daily ────────────────────────────────────────────────────
 
-print("→ UGRO daily (10y)"); ugro_d = fetch("UGRO", "1d", "10y")
-print(f"  {len(ugro_d)} rows, {ugro_d[0]['date'] if ugro_d else 'N/A'} → {ugro_d[-1]['date'] if ugro_d else 'N/A'}")
+# Best-effort fetch of any remaining UGRO daily (Yahoo returns near-nothing since delisting)
+print("→ UGRO daily fresh fetch"); ugro_fresh = fetch("UGRO", "1d", "1y")
+print(f"  {len(ugro_fresh)} rows" + (f", {ugro_fresh[0]['date']} → {ugro_fresh[-1]['date']}" if ugro_fresh else ""))
 
 print("→ FLZH daily (2y)");  flzh_d = fetch("FLZH", "1d", "2y")
 print(f"  {len(flzh_d)} rows" + (f", {flzh_d[0]['date']} → {flzh_d[-1]['date']}" if flzh_d else ""))
 
-cutover  = flzh_d[0]["date"] if flzh_d else None
-daily    = [r for r in ugro_d if not cutover or r["date"] < cutover] + flzh_d
-ugro_end = ([r for r in ugro_d if not cutover or r["date"] < cutover] or ugro_d)[-1]["date"]
-print(f"  combined {len(daily)} rows, cutover={cutover}")
+# Combine: static UGRO history + any fresh UGRO bars before FLZH cutover + FLZH
+cutover  = flzh_d[0]["date"] if flzh_d else "9999-12-31"
+hist_dates = {r["date"] for r in ugro_hist}
+extra_ugro = [r for r in ugro_fresh if r["date"] < cutover and r["date"] not in hist_dates]
+ugro_all = sorted(ugro_hist + extra_ugro, key=lambda r: r["date"])
+daily    = [r for r in ugro_all if r["date"] < cutover] + flzh_d
+ugro_end = ugro_all[-1]["date"] if ugro_all else cutover
+print(f"  combined {len(daily)} rows (UGRO history {len(ugro_hist)} + fresh {len(extra_ugro)} + FLZH {len(flzh_d)}), cutover={cutover}")
 
 # ── Fetch intraday ─────────────────────────────────────────────────
 
-# Intraday: merge UGRO (traded through June 15 2026) + FLZH (June 16 onward)
+# Intraday: merge remaining UGRO (Yahoo may still return recent bars) + FLZH
 # Use date-based dedup so UGRO bars are only kept on days FLZH has no data.
 def fetch_intra(label, interval, ugro_range, flzh_range):
     print(f"→ {label}: UGRO({ugro_range}) + FLZH({flzh_range})")
@@ -653,9 +665,14 @@ async function refreshData(){
       yfetch('UGRO','5m','60d'),  yfetch('FLZH','5m','60d'),
       yfetch('UGRO','1m','7d'),   yfetch('FLZH','1m','7d'),
     ]);
-    if(!fD.length || !uD.length) throw new Error('empty data');
+    if(!fD.length) throw new Error('no FLZH data');
+    // UGRO 已下线，Yahoo 不再返回历史。保留嵌入数据里 cutover 之前的 UGRO 部分，
+    // 只用 Yahoo 更新 FLZH 及可能残余的 UGRO 最近数据。
     const cutover=fD[0].date;
-    DATA.d=[...uD.filter(r=>r.date<cutover),...fD];
+    const ugroHist=DATA.d.filter(r=>r.date<cutover);
+    const ugroHistDates=new Set(ugroHist.map(r=>r.date));
+    const uDExtra=uD.filter(r=>r.date<cutover && !ugroHistDates.has(r.date));
+    DATA.d=[...ugroHist,...uDExtra.sort((a,b)=>a.date<b.date?-1:1),...fD];
     DATA.h1=mergeIntra(uH1,fH1);
     DATA.m30=mergeIntra(uM30,fM30);
     DATA.m15=mergeIntra(uM15,fM15);
